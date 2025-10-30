@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       env:
-        description: "Choose env"
+        description: "Izaberi okruženje"
         required: true
         default: "dev"
         type: choice
@@ -12,7 +12,7 @@ on:
           - dev
           - prd
       provider:
-        description: "Choose provider"
+        description: "Izaberi provider"
         required: true
         default: "common_infrastructure"
         type: choice
@@ -25,6 +25,7 @@ on:
     paths:
       - 'infrastructure/modules/**'
       - 'infrastructure/deployment/**'
+
   pull_request:
     branches: ["*"]
     paths:
@@ -62,10 +63,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Get modified files
+        id: changed_files
+        run: |
+          git fetch origin ${{ github.event.before }}
+          MODIFIED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }})
+          echo "Modified files: $MODIFIED_FILES"
+          echo "modified=$MODIFIED_FILES" >> "$GITHUB_OUTPUT"
+
       - name: Decide if Terraform should run
         id: should_run
         run: |
-          MODIFIED_FILES="${{ join(github.event.commits.*.modified, ',') }}"
+          MODIFIED_FILES="${{ steps.changed_files.outputs.modified }}"
           echo "Modified files: $MODIFIED_FILES"
 
           if [[ "$MODIFIED_FILES" == *"infrastructure/modules/"* ]] || \
