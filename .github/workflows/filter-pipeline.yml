@@ -15,42 +15,51 @@ on:
 jobs:
   terraform:
     name: Terraform Deploy - ${{ matrix.env }} - ${{ matrix.provider }}
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         include:
           - env: dev
             provider: common_infrastructure
             tfvars_path: infrastructure/deployment/common_infrastructure/varvalues/dev.tfvars
-            tfvars_dir: infrastructure/deployment/common_infrastructure/varvalues/
             trigger_path: infrastructure/deployment/common_infrastructure/
 
           - env: prd
             provider: common_infrastructure
             tfvars_path: infrastructure/deployment/common_infrastructure/varvalues/prd.tfvars
-            tfvars_dir: infrastructure/deployment/common_infrastructure/varvalues/
             trigger_path: infrastructure/deployment/common_infrastructure/
 
           - env: dev
             provider: services
             tfvars_path: infrastructure/deployment/services/varvalues/dev.tfvars
-            tfvars_dir: infrastructure/deployment/services/varvalues/
             trigger_path: infrastructure/deployment/services/
 
           - env: prd
             provider: services
             tfvars_path: infrastructure/deployment/services/varvalues/prd.tfvars
-            tfvars_dir: infrastructure/deployment/services/varvalues/
             trigger_path: infrastructure/deployment/services/
 
-    if: |
-      contains(join(github.event.commits.*.modified, ','), 'infrastructure/modules/') ||
-      contains(join(github.event.commits.*.modified, ','), matrix.tfvars_path) ||
-      (
-        contains(join(github.event.commits.*.modified, ','), matrix.trigger_path) &&
-        !contains(join(github.event.commits.*.modified, ','), matrix.tfvars_dir)
-      )
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    uses: ./.github/workflows/terraform-exec.yml
-    with:
-      env: ${{ matrix.env }}
-      provider: ${{ matrix.provider }}
+      - name: Decide if Terraform should run
+        id: should_run
+        run: |
+          MODIFIED_FILES="${{ join(github.event.commits.*.modified, ',') }}"
+          echo "Modified files: $MODIFIED_FILES"
+
+          if [[ "$MODIFIED_FILES" == *"infrastructure/modules/"* ]] || \
+             [[ "$MODIFIED_FILES" == *"${{ matrix.tfvars_path }}"* ]] || \
+             [[ "$MODIFIED_FILES" == *"${{ matrix.trigger_path }}"* ]]; then
+            echo "run=true" >> $GITHUB_OUTPUT
+          else
+            echo "run=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run Terraform
+        if: steps.should_run.outputs.run == 'true'
+        uses: ./.github/workflows/terraform-exec.yml
+        with:
+          env: ${{ matrix.env }}
+          provider: ${{ matrix.provider }}
