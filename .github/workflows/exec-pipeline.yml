@@ -1,0 +1,78 @@
+name: Terraform Execution
+
+on:
+  workflow_call:
+    inputs:
+      env:
+        type: string
+      provider:
+        type: string
+
+jobs:
+  terraform:
+    name: Terraform ${{ inputs.env }} - ${{ inputs.provider }}
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.env }}
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.13.4
+
+      - name: Azure Login via OIDC
+        uses: azure/login@v1
+        with:
+          client-id: ${{ variables.AZURE_CLIENT_ID }}
+          tenant-id: ${{ variables.AZURE_TENANT_ID }}
+          subscription-id: ${{ variables.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Terraform Init
+        run: terraform init -backend-config=../../infrastructure/deployment/${{ inputs.provider }}/backend/${{ inputs.env }}.tf
+
+      - name: Terraform Format Check
+        if: github.head_ref != 'main'
+        run: terraform fmt -check -recursive || echo "::warning::Terraform fmt check failed"
+        continue-on-error: true
+
+      - name: Terraform Validate
+        if: github.head_ref != 'main'
+        run: terraform validate
+
+      - name: Security Check
+        if: github.head_ref == 'main'
+        uses: aquasecurity/tfsec-action@v1.0.0
+        with:
+          working_directory: infrastructure/deployment/${{ inputs.provider }}
+
+      - name: Terraform Plan
+        run: terraform plan -var-file=../../infrastructure/deployment/${{ inputs.provider }}/varvalues/${{ inputs.env }}.tfvars -out=tfplan
+
+      - name: Wait for Approval
+        if: github.head_ref == 'main'
+        uses: chrnorm/deploy-approval-action@v1
+        with:
+          approvers: zeljko.miloradovic
+
+      - name: Terraform Apply
+        if: github.head_ref == 'main'
+        run: terraform apply tfplan
+
+      - name: Export Ansible inventory
+        run: terraform output -raw ansible_inventory > ../../ansible/inventory/${{ inputs.env }}.ini
+
+      - name: Setup Ansible
+        uses: dawidd6/action-ansible-playbook@v2
+        with:
+          playbook: ../../ansible/playbooks/deploy.yml
+          inventory: ../../ansible/inventory/${{ inputs.env }}.ini
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          options: |
+            -e "env_name=${{ inputs.env }}"

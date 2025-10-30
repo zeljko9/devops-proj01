@@ -1,0 +1,56 @@
+name: Terraform Filter
+
+on:
+  push:
+    branches: ["*"]
+    paths:
+      - 'infrastructure/modules/**'
+      - 'infrastructure/deployment/**'
+  pull_request:
+    branches: ["*"]
+    paths:
+      - 'infrastructure/modules/**'
+      - 'infrastructure/deployment/**'
+
+jobs:
+  terraform:
+    name: Terraform Deploy - ${{ matrix.env }} - ${{ matrix.provider }}
+    strategy:
+      matrix:
+        include:
+          - env: dev
+            provider: common_infrastructure
+            tfvars_path: infrastructure/deployment/common_infrastructure/varvalues/dev.tfvars
+            tfvars_dir: infrastructure/deployment/common_infrastructure/varvalues/
+            trigger_path: infrastructure/deployment/common_infrastructure/
+
+          - env: prd
+            provider: common_infrastructure
+            tfvars_path: infrastructure/deployment/common_infrastructure/varvalues/prd.tfvars
+            tfvars_dir: infrastructure/deployment/common_infrastructure/varvalues/
+            trigger_path: infrastructure/deployment/common_infrastructure/
+
+          - env: dev
+            provider: services
+            tfvars_path: infrastructure/deployment/services/varvalues/dev.tfvars
+            tfvars_dir: infrastructure/deployment/services/varvalues/
+            trigger_path: infrastructure/deployment/services/
+
+          - env: prd
+            provider: services
+            tfvars_path: infrastructure/deployment/services/varvalues/prd.tfvars
+            tfvars_dir: infrastructure/deployment/services/varvalues/
+            trigger_path: infrastructure/deployment/services/
+
+    if: |
+      contains(join(github.event.commits.*.modified, ','), 'infrastructure/modules/') ||
+      contains(join(github.event.commits.*.modified, ','), matrix.tfvars_path) ||
+      (
+        contains(join(github.event.commits.*.modified, ','), matrix.trigger_path) &&
+        !contains(join(github.event.commits.*.modified, ','), matrix.tfvars_dir)
+      )
+
+    uses: ./.github/workflows/terraform-exec.yml
+    with:
+      env: ${{ matrix.env }}
+      provider: ${{ matrix.provider }}

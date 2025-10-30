@@ -1,0 +1,193 @@
+- name: Add remote host to known_hosts
+  hosts: localhost
+  gather_facts: false
+  vars:
+    host_ip: "{{ lookup('pipe', 'curl -s ifconfig.me') }}"
+  tasks:
+    - name: Add host key for {{ host_ip }}
+      ansible.builtin.known_hosts:
+        name: "{{ host_ip }}"
+        key: "{{ lookup('pipe', 'ssh-keyscan -H ' + host_ip) }}"
+
+- name: Deploy Keycloak, Postgres, Nginx, OAuth2 Proxy
+  hosts: all
+  become: true
+  gather_facts: false
+  vars:
+    host_ip: "{{ lookup('pipe', 'curl -s ifconfig.me') }}"
+    keycloak_image: "{{ lookup('env', 'KEYCLOAK_IMAGE') | default('quay.io/keycloak/keycloak:21.0.1', true) }}"
+    postgres_image: "{{ lookup('env', 'POSTGRES_IMAGE') | default('postgres:15', true) }}"
+    nginx_image: "{{ lookup('env', 'NGINX_IMAGE') | default('nginx:1.25', true) }}"
+
+    keycloak_admin_user: admin
+    keycloak_admin_password: admin
+
+    keycloak_api_url: "http://localhost:8080/keycloak"
+    keycloak_base_url: "http://{{ host_ip }}/keycloak"
+
+    keycloak_realm: master
+    keycloak_client_id: nginx-client
+    keycloak_redirect_uri: "http://{{ host_ip }}/"
+    keycloak_web_origin: "http://{{ host_ip }}"
+
+    static_path: "/home/devops/static-path"
+    nginx_conf_path: "/home/devops/nginx"
+
+  tasks:
+    - name: Create directories if they do not exist
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+        - "{{ static_path }}"
+        - "{{ nginx_conf_path }}"
+
+    - name: Deploy static page with Keycloak config
+      ansible.builtin.template:
+        src: "../static-html/index.html.j2"
+        dest: "{{ static_path }}/index.html"
+
+    - name: Deploy Nginx config
+      ansible.builtin.copy:
+        dest: "{{ nginx_conf_path }}/nginx.conf"
+        content: |
+          events {}
+
+          http {
+            server {
+              listen 80;
+
+              location / {
+                root /usr/share/nginx/html;
+                index index.html;
+              }
+
+              location /keycloak/ {
+                proxy_pass http://keycloak:8080;
+                proxy_set_header Host $host;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+              }
+            }
+          }
+
+    - name: Ensure Docker network exists
+      community.docker.docker_network:
+        name: infra-net
+        state: present
+
+    - name: Deploy Postgres container
+      community.docker.docker_container:
+        name: postgres
+        image: "{{ postgres_image }}"
+        state: started
+        recreate: false
+        pull: true
+        restart_policy: always
+        env:
+          POSTGRES_USER: admin
+          POSTGRES_PASSWORD: admin
+          POSTGRES_DB: keycloak
+        volumes:
+          - postgres_data:/var/lib/postgresql/data
+        networks:
+          - name: infra-net
+        healthcheck:
+          test: ["CMD-SHELL", "pg_isready -U admin"]
+          interval: 10s
+          timeout: 5s
+          retries: 10
+
+    - name: Check if Postgres is ready
+      shell: docker exec postgres pg_isready -U admin
+      register: pg_ready
+      until: pg_ready.rc == 0
+      retries: 10
+      delay: 5
+
+    - name: Deploy Keycloak container
+      community.docker.docker_container:
+        name: keycloak
+        image: "{{ keycloak_image }}"
+        command: ["start-dev", "--http-relative-path=/keycloak"]
+        recreate: true
+        pull: true
+        restart_policy: always
+        env:
+          KEYCLOAK_ADMIN: admin
+          KEYCLOAK_ADMIN_PASSWORD: admin
+          KC_HOSTNAME_URL: "http://{{ host_ip }}/keycloak"
+          KC_HOSTNAME_ADMIN_URL: "http://{{ host_ip }}/keycloak"
+          KC_PROXY: passthrough
+          KC_HOSTNAME_STRICT_BACKCHANNEL: "true"
+          KC_LOG_LEVEL: debug
+        published_ports:
+          - 8080:8080
+        networks:
+          - name: infra-net
+        healthcheck:
+          test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 && exit 0 || exit 1"]
+          interval: 10s
+          timeout: 5s
+          retries: 20
+
+    - name: Deploy Nginx container
+      community.docker.docker_container:
+        name: nginx
+        image: "{{ nginx_image }}"
+        state: started
+        recreate: false
+        pull: true
+        restart_policy: always
+        volumes:
+          - "{{ static_path }}:/usr/share/nginx/html:ro"
+          - "{{ nginx_conf_path }}/nginx.conf:/etc/nginx/nginx.conf:ro"
+        published_ports:
+          - 80:80
+        networks:
+          - name: infra-net
+
+    - name: Wait for Keycloak to become available
+      uri:
+        url: "{{ keycloak_api_url }}/realms/{{ keycloak_realm }}"
+        method: GET
+        status_code: 200
+        return_content: no
+      register: keycloak_ready
+      until: keycloak_ready.status == 200
+      retries: 20
+      delay: 5
+
+    - name: Get Keycloak admin access token
+      uri:
+        url: "{{ keycloak_api_url }}/realms/{{ keycloak_realm }}/protocol/openid-connect/token"
+        method: POST
+        headers:
+          Content-Type: "application/x-www-form-urlencoded"
+        body: "username={{ keycloak_admin_user }}&password={{ keycloak_admin_password }}&grant_type=password&client_id=admin-cli"
+        body_format: form-urlencoded
+        return_content: true
+      register: keycloak_token_response
+      until: keycloak_token_response.status == 200
+      retries: 10
+      delay: 5
+
+    - name: Create nginx-client in Keycloak
+      uri:
+        url: "{{ keycloak_api_url }}/admin/realms/{{ keycloak_realm }}/clients"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ keycloak_token_response.json.access_token }}"
+          Content-Type: "application/json"
+        body_format: json
+        body:
+          clientId: "{{ keycloak_client_id }}"
+          enabled: true
+          publicClient: true
+          redirectUris:
+            - "{{ keycloak_redirect_uri }}"
+          webOrigins:
+            - "{{ keycloak_web_origin }}"
+      register: keycloak_client_create
+      failed_when: keycloak_client_create.status not in [201, 409]

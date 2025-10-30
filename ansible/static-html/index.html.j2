@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Protected Page</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/keycloak-js@20.0.5/dist/keycloak.min.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f6fa;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    #content {
+      display: none;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      padding: 40px;
+      text-align: center;
+      width: 400px;
+    }
+    h1 {
+      margin-bottom: 10px;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      background: #0057b7;
+      color: white;
+      cursor: pointer;
+      font-size: 1em;
+    }
+    button:hover {
+      background: #003d8f;
+    }
+  </style>
+</head>
+<body>
+  <div id="content">
+    <h1>Welcome, <span id="username"></span>!</h1>
+    <p>You are successfully logged in via Keycloak.</p>
+    <button onclick="logout()">Logout</button>
+  </div>
+
+  <script>
+    // Kreiraj Keycloak instancu
+    const keycloak = new Keycloak({
+      url: '/keycloak',          // proxirano kroz nginx
+      realm: 'master',
+      clientId: 'nginx-client'
+    });
+
+    // Inicijalizacija Keycloak-a
+    keycloak.init({ onLoad: 'login-required' })
+      .then(authenticated => {
+        if (authenticated) {
+          // Prikazi sadržaj ako je korisnik ulogovan
+          document.getElementById('content').style.display = 'block';
+          document.getElementById('username').textContent = keycloak.tokenParsed.preferred_username;
+        } else {
+          // Ako nije ulogovan, pokreni login
+          keycloak.login();
+        }
+      })
+      .catch(error => {
+        console.error('❌ Failed to initialize Keycloak:', error);
+        document.body.innerHTML = "<h2 style='color:red;'>Failed to connect to Keycloak.</h2>";
+      });
+
+    // Logout funkcija
+    function logout() {
+      keycloak.logout({ redirectUri: window.location.origin });
+    }
+  </script>
+</body>
+</html>
