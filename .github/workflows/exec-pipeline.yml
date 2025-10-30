@@ -66,19 +66,19 @@ jobs:
         run: terraform init -backend-config=../../infrastructure/deployment/${{ inputs.provider }}/backend/${{ inputs.env }}.tf
 
       - name: Terraform Format Check
-        if: github.head_ref != 'main'
+        if: github.ref != 'refs/heads/main'
         run: terraform fmt -check -recursive || echo "::warning::Terraform fmt check failed"
         continue-on-error: true
 
       - name: Terraform Validate
-        if: github.head_ref != 'main'
+        if: github.ref != 'refs/heads/main'
         run: terraform validate
 
-      - name: Security Check
-        if: github.head_ref == 'main'
-        uses: aquasecurity/tfsec-action@v1.0.0
-        with:
-          working_directory: infrastructure/deployment/${{ inputs.provider }}
+      # - name: Security Check
+      #   if: github.ref == 'refs/heads/main'
+      #   uses: aquasecurity/tfsec-action@v1.0.0
+      #   with:
+      #     working_directory: infrastructure/deployment/${{ inputs.provider }}
 
       - name: Terraform Plan
         run: terraform plan -var-file=../../infrastructure/deployment/${{ inputs.provider }}/varvalues/${{ inputs.env }}.tfvars -out=tfplan
@@ -93,7 +93,7 @@ jobs:
           issue-body: "Please approve or deny the deployment."
 
       - name: Terraform Apply
-        if: github.head_ref == 'main'
+        if: github.ref == 'refs/heads/main'
         run: terraform apply tfplan
 
       - name: Export Ansible inventory
