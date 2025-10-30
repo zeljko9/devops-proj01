@@ -35,7 +35,7 @@ on:
 jobs:
   terraform:
     name: Terraform Deploy - ${{ matrix.env }} - ${{ matrix.provider }}
-    runs-on: ubuntu-latest
+    uses: ./.github/workflows/terraform-exec.yml
     strategy:
       matrix:
         include:
@@ -58,38 +58,8 @@ jobs:
             provider: services
             tfvars_path: infrastructure/deployment/services/varvalues/prd.tfvars
             trigger_path: infrastructure/deployment/services/
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Get modified files
-        id: changed_files
-        run: |
-          git fetch origin ${{ github.event.before }}
-          MODIFIED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }})
-          echo "Modified files: $MODIFIED_FILES"
-          echo "modified<<EOF" >> $GITHUB_OUTPUT
-          echo "$MODIFIED_FILES" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
-      - name: Decide if Terraform should run
-        id: should_run
-        run: |
-          MODIFIED_FILES="${{ steps.changed_files.outputs.modified }}"
-          echo "Modified files: $MODIFIED_FILES"
-
-          if [[ "$MODIFIED_FILES" == *"infrastructure/modules/"* ]] || \
-             [[ "$MODIFIED_FILES" == *"${{ matrix.tfvars_path }}"* ]] || \
-             [[ "$MODIFIED_FILES" == *"${{ matrix.trigger_path }}"* ]]; then
-            echo "run=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "run=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Run Terraform
-        if: steps.should_run.outputs.run == 'true' || github.event_name == 'workflow_dispatch'
-        uses: zeljko9/devops-proj01/.github/workflows/terraform-exec.yml@main
-        with:
-          env: ${{ github.event.inputs.env || matrix.env }}
-          provider: ${{ github.event.inputs.provider || matrix.provider }}
+    with:
+      env: ${{ github.event.inputs.env || matrix.env }}
+      provider: ${{ github.event.inputs.provider || matrix.provider }}
+      tfvars_path: ${{ github.event.inputs.env && github.event.inputs.provider && format('infrastructure/deployment/{0}/varvalues/{1}.tfvars', github.event.inputs.provider, github.event.inputs.env) || matrix.tfvars_path }}
+      trigger_path: ${{ github.event.inputs.env && github.event.inputs.provider && format('infrastructure/deployment/{0}/', github.event.inputs.provider) || matrix.trigger_path }}

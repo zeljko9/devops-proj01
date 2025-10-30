@@ -7,7 +7,11 @@ on:
         type: string
       provider:
         type: string
-
+      trigger_path:
+         type: string
+      tfvars_path:
+         type: string
+      
 jobs:
   terraform:
     name: Terraform ${{ inputs.env }} - ${{ inputs.provider }}
@@ -21,6 +25,34 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+
+      - name: Get modified files
+        id: changed_files
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            MODIFIED_FILES=$(git diff --name-only HEAD~1)
+          else
+            git fetch origin ${{ github.event.before }}
+            MODIFIED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }})
+          fi
+          echo "Modified files: $MODIFIED_FILES"
+          echo "modified<<EOF" >> $GITHUB_OUTPUT
+          echo "$MODIFIED_FILES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Decide if Terraform should run
+        id: should_run
+        run: |
+          MODIFIED_FILES="${{ steps.changed_files.outputs.modified }}"
+          if  [ "${{ github.event_name }}" = "workflow_dispatch" ] || \
+             [[ "$MODIFIED_FILES" == *"infrastructure/modules/"* ]] || \
+             [[ "$MODIFIED_FILES" == *"${{ inputs.tfvars_path }}"* ]] || \
+             [[ "$MODIFIED_FILES" == *"${{ inputs.trigger_path }}" ]]; then
+            echo "run=true" >> $GITHUB_OUTPUT
+          else
+            echo "run=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
