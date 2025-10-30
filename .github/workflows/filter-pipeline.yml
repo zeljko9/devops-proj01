@@ -37,8 +37,19 @@ on:
       - 'infrastructure/deployment/**'
 
 jobs:
-  terraform:
-    name: Terraform Deploy - ${{ matrix.env }} - ${{ matrix.provider }}
+  manual-trigger:
+    if: github.event_name == 'workflow_dispatch'
+    name: Manual Terraform Deploy - ${{ inputs.env }} - ${{ inputs.provider }}
+    uses: ./.github/workflows/exec-pipeline.yml
+    with:
+      env: ${{ inputs.env }}
+      provider: ${{ inputs.provider }}
+      tfvars_path: infrastructure/deployment/${{ inputs.provider }}/varvalues/${{ inputs.env }}.tfvars
+      trigger_path: infrastructure/deployment/${{ inputs.provider }}/
+
+  auto-trigger:
+    if: github.event_name != 'workflow_dispatch'
+    name: Auto Terraform Deploy - ${{ matrix.env }} - ${{ matrix.provider }}
     uses: ./.github/workflows/exec-pipeline.yml
     strategy:
       matrix:
@@ -63,7 +74,7 @@ jobs:
             tfvars_path: infrastructure/deployment/services/varvalues/prd.tfvars
             trigger_path: infrastructure/deployment/services/
     with:
-      env: ${{ github.event.inputs.env || matrix.env }}
-      provider: ${{ github.event.inputs.provider || matrix.provider }}
-      tfvars_path: ${{ github.event.inputs.env && github.event.inputs.provider && format('infrastructure/deployment/{0}/varvalues/{1}.tfvars', github.event.inputs.provider, github.event.inputs.env) || matrix.tfvars_path }}
-      trigger_path: ${{ github.event.inputs.env && github.event.inputs.provider && format('infrastructure/deployment/{0}/', github.event.inputs.provider) || matrix.trigger_path }}
+      env: ${{ matrix.env }}
+      provider: ${{ matrix.provider }}
+      tfvars_path: ${{ matrix.tfvars_path }}
+      trigger_path: ${{ matrix.trigger_path }}

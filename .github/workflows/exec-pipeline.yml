@@ -42,10 +42,10 @@ jobs:
         id: should_run
         run: |
           MODIFIED_FILES="${{ steps.changed_files.outputs.modified }}"
-          if  [ "${{ github.event_name }}" = "workflow_dispatch" ] || \
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || \
              [[ "$MODIFIED_FILES" == *"infrastructure/modules/"* ]] || \
-             [[ "$MODIFIED_FILES" == *"${{ inputs.tfvars_path }}"* ]] || \
-             [[ "$MODIFIED_FILES" == *"${{ inputs.trigger_path }}" ]]; then
+             [[ "$MODIFIED_FILES" == *"infrastructure/deployment/${{ inputs.provider }}/varvalues/${{ inputs.env }}.tfvars"* ]] || \
+             [[ "$MODIFIED_FILES" == *"infrastructure/deployment/${{ inputs.provider }}/" ]]; then
             echo "run=true" >> $GITHUB_OUTPUT
           else
             echo "run=false" >> $GITHUB_OUTPUT
@@ -64,7 +64,7 @@ jobs:
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
       - name: Terraform Init
-        run: terraform init -backend-config=../../infrastructure/deployment/${{ inputs.provider }}/backend/${{ inputs.env }}.tf
+        run: terraform init -backend-config=./infrastructure/deployment/${{ inputs.provider }}/backend/${{ inputs.env }}.tf
 
       - name: Terraform Format Check
         if: github.ref != 'refs/heads/main'
@@ -82,7 +82,7 @@ jobs:
       #     working_directory: infrastructure/deployment/${{ inputs.provider }}
 
       - name: Terraform Plan
-        run: terraform plan -var-file=../../infrastructure/deployment/${{ inputs.provider }}/varvalues/${{ inputs.env }}.tfvars -out=tfplan
+        run: terraform plan -var-file=./infrastructure/deployment/${{ inputs.provider }}/varvalues/${{ inputs.env }}.tfvars -out=tfplan
 
       - name: Manual approval
         uses: trstringer/manual-approval@v1
