@@ -28,11 +28,11 @@ jobs:
           terraform_version: 1.13.4
 
       - name: Azure Login via OIDC
-        uses: azure/login@v1
+        uses: azure/login@v2
         with:
-          client-id: ${{ variables.AZURE_CLIENT_ID }}
-          tenant-id: ${{ variables.AZURE_TENANT_ID }}
-          subscription-id: ${{ variables.AZURE_SUBSCRIPTION_ID }}
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
       - name: Terraform Init
         run: terraform init -backend-config=../../infrastructure/deployment/${{ inputs.provider }}/backend/${{ inputs.env }}.tf
@@ -66,11 +66,11 @@ jobs:
         run: terraform apply tfplan
 
       - name: Export Ansible inventory
-        if: matrix.provider == 'services'
+        if: inputs.provider == 'services'
         run: terraform output -raw ansible_inventory > ../../ansible/inventory/${{ inputs.env }}.ini
 
       - name: Setup Ansible
-        if: matrix.provider == 'services'
+        if: inputs.provider == 'services'
         uses: dawidd6/action-ansible-playbook@v2
         with:
           playbook: ../../ansible/playbooks/deploy.yml

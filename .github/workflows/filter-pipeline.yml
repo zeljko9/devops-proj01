@@ -52,9 +52,9 @@ jobs:
           if [[ "$MODIFIED_FILES" == *"infrastructure/modules/"* ]] || \
              [[ "$MODIFIED_FILES" == *"${{ matrix.tfvars_path }}"* ]] || \
              [[ "$MODIFIED_FILES" == *"${{ matrix.trigger_path }}"* ]]; then
-            echo "run=true" >> $GITHUB_OUTPUT
+            echo "run=true" >> "$GITHUB_OUTPUT"
           else
-            echo "run=false" >> $GITHUB_OUTPUT
+            echo "run=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Run Terraform
