@@ -83,11 +83,14 @@ jobs:
       - name: Terraform Plan
         run: terraform plan -var-file=../../infrastructure/deployment/${{ inputs.provider }}/varvalues/${{ inputs.env }}.tfvars -out=tfplan
 
-      - name: Wait for Approval
-        if: github.head_ref == 'main'
-        uses: chrnorm/deploy-approval-action@v1
+      - name: Manual approval
+        uses: trstringer/manual-approval@v1
         with:
-          approvers: zeljko.miloradovic
+          secret: ${{ secrets.GITHUB_TOKEN }}
+          approvers: zeljko.m99@hotmail.com
+          minimum-approvals: 1
+          issue-title: "Manual Approval Required for Terraform Apply"
+          issue-body: "Please approve or deny the deployment."
 
       - name: Terraform Apply
         if: github.head_ref == 'main'
