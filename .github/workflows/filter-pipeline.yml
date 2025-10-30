@@ -69,7 +69,9 @@ jobs:
           git fetch origin ${{ github.event.before }}
           MODIFIED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }})
           echo "Modified files: $MODIFIED_FILES"
-          echo "modified=$MODIFIED_FILES" >> "$GITHUB_OUTPUT"
+          echo "modified<<EOF" >> $GITHUB_OUTPUT
+          echo "$MODIFIED_FILES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Decide if Terraform should run
         id: should_run
