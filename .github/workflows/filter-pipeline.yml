@@ -2,6 +2,24 @@ name: Terraform Filter
 
 on:
   workflow_dispatch:
+    inputs:
+      env:
+        description: "Choose env"
+        required: true
+        default: "dev"
+        type: choice
+        options:
+          - dev
+          - prd
+      provider:
+        description: "Choose provider"
+        required: true
+        default: "services"
+        type: choice
+        options:
+          - common_infrastructure
+          - services
+          
   push:
     branches: ["*"]
     paths:
