@@ -35,7 +35,7 @@ on:
 jobs:
   terraform:
     name: Terraform Deploy - ${{ matrix.env }} - ${{ matrix.provider }}
-    uses: zeljko9/devops-proj01/.github/workflows/terraform-exec.yml@main
+    uses: ./.github/workflows/exec-pipeline.yml
     strategy:
       matrix:
         include:
