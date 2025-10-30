@@ -1,0 +1,2 @@
+[${env_name}]
+${env_name}-vm ansible_host=${ip} ansible_user=devops ansible_ssh_private_key_file=~/.ssh/devops_vm ansible_port=22
