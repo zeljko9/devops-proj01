@@ -11,7 +11,7 @@ settings = {
 
 environment = {
   b_unit_id      = "devops"
-  environment_id = "prd"
+  environment_id = "pr"
   location_id    = "euw"
   service_name   = "proj01"
   location       = "westeurope"

@@ -2,10 +2,10 @@ subscription_id = "7afbbf61-15f2-4b92-a808-1e284f749e8d"
 
 settings = {
   vm = {
-    name           = "linux-service-vm"
+    name                 = "linux-service-vm"
     public_ip_allocation = true
-    admin_username = "devops"
-    size           = "Standard_B1ms"
+    admin_username       = "devops"
+    size                 = "Standard_B1ms"
     os_disk = {
       name = "linux-service-vm-disk"
       size = 30
@@ -49,7 +49,7 @@ common_infrastructure_state = {
 
 environment = {
   b_unit_id      = "devops"
-  environment_id = "dev"
+  environment_id = "dv"
   location_id    = "euw"
   service_name   = "proj01"
   location       = "westeurope"

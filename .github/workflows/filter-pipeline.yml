@@ -3,6 +3,7 @@ name: Infrastructure Filter
 permissions:
   id-token: write
   contents: read
+  issues: write
 
 on:
   workflow_dispatch:

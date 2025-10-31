@@ -65,33 +65,33 @@ module "common_network_security_groups" {
 module "common_nsg_rules" {
   source = "../../local/network-security-group/rule"
 
-  resource_group_name = module.common_resource_group.name
+  resource_group_name         = module.common_resource_group.name
   network_security_group_name = module.common_network_security_groups.name["vm"]
 
-settings = {
-  "allow_ssh" = {
-    description                = "Allow SSH (port 22)"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "22"
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
-    access                     = "Allow"
-    priority                   = 100
-    direction                  = "Inbound"
-  },
-  "allow_http" = {
-    description                = "Allow HTTP (port 80)"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "80"
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
-    access                     = "Allow"
-    priority                   = 110
-    direction                  = "Inbound"
+  settings = {
+    "allow_ssh" = {
+      description                = "Allow SSH (port 22)"
+      protocol                   = "Tcp"
+      source_port_range          = "*"
+      destination_port_range     = "22"
+      source_address_prefix      = "*"
+      destination_address_prefix = "*"
+      access                     = "Allow"
+      priority                   = 100
+      direction                  = "Inbound"
+    },
+    "allow_http" = {
+      description                = "Allow HTTP (port 80)"
+      protocol                   = "Tcp"
+      source_port_range          = "*"
+      destination_port_range     = "80"
+      source_address_prefix      = "*"
+      destination_address_prefix = "*"
+      access                     = "Allow"
+      priority                   = 110
+      direction                  = "Inbound"
+    }
   }
-}
 }
 
 module "common_workspace" {

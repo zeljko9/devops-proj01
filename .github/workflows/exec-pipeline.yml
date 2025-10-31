@@ -50,9 +50,7 @@ jobs:
           else
             echo "run=false" >> $GITHUB_OUTPUT
           fi
-      - name: List folders
-        working-directory: infrastructure/deployment/${{ inputs.provider }}
-        run: tree
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:

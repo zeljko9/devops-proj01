@@ -11,10 +11,10 @@ variable "settings" {
   description = "Settings for VM, network interface, and diagnostics"
   type = object({
     vm = object({
-      name           = string
+      name                 = string
       public_ip_allocation = bool
-      admin_username = string
-      size           = string
+      admin_username       = string
+      size                 = string
       os_disk = object({
         name = string
         size = number
