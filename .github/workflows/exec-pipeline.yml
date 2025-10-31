@@ -79,7 +79,7 @@ jobs:
         working-directory: infrastructure/deployment/${{ inputs.provider }}
         run: |
           for i in {1..10}; do
-            terraform init -backend-config=backend/${{ inputs.env }}.tf && break
+            terraform init -backend-config=backend/${{ inputs.env }}.backend.config && break
             echo "Retrying in 15s..."
             sleep 15
           done
