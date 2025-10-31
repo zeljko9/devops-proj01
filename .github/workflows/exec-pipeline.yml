@@ -92,7 +92,7 @@ jobs:
 
       - name: Terraform Validate
         if: github.ref != 'refs/heads/main'
-        working-directory: ./infrastructure/deployment/${{ inputs.provider }}
+        working-directory: infrastructure/deployment/${{ inputs.provider }}
         run: terraform validate
 
       # - name: Security Check
@@ -102,7 +102,7 @@ jobs:
       #     working_directory: infrastructure/deployment/${{ inputs.provider }}
 
       - name: Terraform Plan
-        working-directory: ./infrastructure/deployment/${{ inputs.provider }}
+        working-directory: infrastructure/deployment/${{ inputs.provider }}
         run: terraform plan -var-file=varvalues/${{ inputs.env }}.tfvars -out=tfplan
 
       - name: Manual approval
@@ -116,13 +116,13 @@ jobs:
 
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main'
-        working-directory: ./infrastructure/deployment/${{ inputs.provider }}
+        working-directory: infrastructure/deployment/${{ inputs.provider }}
         run: terraform apply tfplan
 
       - name: Export Ansible inventory
         if: inputs.provider == 'services'
-        working-directory: ./infrastructure/deployment/${{ inputs.provider }}
-        run: terraform output -raw ansible_inventory > ./ansible/inventory/${{ inputs.env }}.ini
+        working-directory: infrastructure/deployment/${{ inputs.provider }}
+        run: terraform output -raw ansible_inventory > ../../ansible/inventory/${{ inputs.env }}.ini
 
       - name: Remove IP to Azure Storage Firewall
         if: always()
