@@ -10,11 +10,11 @@ on:
       env:
         description: "Choose env"
         required: true
-        default: "dev"
+        default: "dv"
         type: choice
         options:
-          - dev
-          - prd
+          - dv
+          - pr
       provider:
         description: "Choose provider"
         required: true
@@ -54,22 +54,22 @@ jobs:
     strategy:
       matrix:
         include:
-          - env: dev
+          - env: dv
             provider: common_infrastructure
             tfvars_path: infrastructure/deployment/common_infrastructure/varvalues/dev.tfvars
             trigger_path: infrastructure/deployment/common_infrastructure/
 
-          - env: prd
+          - env: pr
             provider: common_infrastructure
             tfvars_path: infrastructure/deployment/common_infrastructure/varvalues/prd.tfvars
             trigger_path: infrastructure/deployment/common_infrastructure/
 
-          - env: dev
+          - env: dv
             provider: services
             tfvars_path: infrastructure/deployment/services/varvalues/dev.tfvars
             trigger_path: infrastructure/deployment/services/
 
-          - env: prd
+          - env: pr
             provider: services
             tfvars_path: infrastructure/deployment/services/varvalues/prd.tfvars
             trigger_path: infrastructure/deployment/services/
