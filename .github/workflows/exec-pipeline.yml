@@ -103,7 +103,7 @@ jobs:
 
       - name: Terraform Plan
         working-directory: ./infrastructure/deployment/${{ inputs.provider }}
-        run: terraform plan -var-file=./varvalues/${{ inputs.env }}.tfvars -out=tfplan
+        run: terraform plan -var-file=varvalues/${{ inputs.env }}.tfvars -out=tfplan
 
       - name: Manual approval
         uses: trstringer/manual-approval@v1
@@ -125,6 +125,7 @@ jobs:
         run: terraform output -raw ansible_inventory > ./ansible/inventory/${{ inputs.env }}.ini
 
       - name: Remove IP to Azure Storage Firewall
+        if: always()
         run: |
           az storage account network-rule remove \
             --resource-group devops-1-${{ inputs.env }}-euw-proj01-00 \
