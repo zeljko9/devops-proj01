@@ -65,11 +65,11 @@ jobs:
 
       - name: Terraform Init
         working-directory: ./infrastructure/deployment/${{ inputs.provider }}
-        run: terraform init -backend-config=./infrastructure/deployment/${{ inputs.provider }}/backend/${{ inputs.env }}.backend.config
+        run: terraform init -backend-config=./backend/${{ inputs.env }}.backend.config
 
       - name: Terraform Format Check
         if: github.ref != 'refs/heads/main'
-        working-directory: ./infrastructure/deployment/${{ inputs.provider }}
+        working-directory: ./infrastructure/
         run: terraform fmt -check -recursive || echo "::warning::Terraform fmt check failed"
         continue-on-error: true
 
@@ -86,7 +86,7 @@ jobs:
 
       - name: Terraform Plan
         working-directory: ./infrastructure/deployment/${{ inputs.provider }}
-        run: terraform plan -var-file=./infrastructure/deployment/${{ inputs.provider }}/varvalues/${{ inputs.env }}.tfvars -out=tfplan
+        run: terraform plan -var-file=./varvalues/${{ inputs.env }}.tfvars -out=tfplan
 
       - name: Manual approval
         uses: trstringer/manual-approval@v1
@@ -104,6 +104,7 @@ jobs:
 
       - name: Export Ansible inventory
         if: inputs.provider == 'services'
+        working-directory: ./infrastructure/deployment/${{ inputs.provider }}
         run: terraform output -raw ansible_inventory > ./ansible/inventory/${{ inputs.env }}.ini
 
       - name: Setup Ansible
