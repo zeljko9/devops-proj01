@@ -65,7 +65,7 @@ jobs:
 
       - name: Terraform Init
         working-directory: ./infrastructure/deployment/${{ inputs.provider }}
-        run: terraform init -backend-config=./infrastructure/deployment/${{ inputs.provider }}/backend/${{ inputs.env }}.tf
+        run: terraform init -backend-config=./infrastructure/deployment/${{ inputs.provider }}/backend/${{ inputs.env }}.tfvars
 
       - name: Terraform Format Check
         if: github.ref != 'refs/heads/main'
@@ -99,18 +99,19 @@ jobs:
 
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main'
+        working-directory: ./infrastructure/deployment/${{ inputs.provider }}
         run: terraform apply tfplan
 
       - name: Export Ansible inventory
         if: inputs.provider == 'services'
-        run: terraform output -raw ansible_inventory > ../../ansible/inventory/${{ inputs.env }}.ini
+        run: terraform output -raw ansible_inventory > ./ansible/inventory/${{ inputs.env }}.ini
 
       - name: Setup Ansible
         if: inputs.provider == 'services'
         uses: dawidd6/action-ansible-playbook@v2
         with:
-          playbook: ../../ansible/playbooks/deploy.yml
-          inventory: ../../ansible/inventory/${{ inputs.env }}.ini
+          playbook: ./ansible/playbooks/deploy.yml
+          inventory: ./ansible/inventory/${{ inputs.env }}.ini
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           options: |
             -e "env_name=${{ inputs.env }}"
