@@ -1,4 +1,4 @@
-name: Terraform Execution
+name: Infrastructure Execution
 
 on:
   workflow_call:
@@ -75,10 +75,14 @@ jobs:
             --account-name 000devops${{ inputs.env }}euwproj01stg \
             --ip-address ${{ steps.ip.outputs.ip }}
 
-      
-      - name: Terraform Init
-        working-directory: ./infrastructure/deployment/${{ inputs.provider }}
-        run: terraform init -backend-config=./backend/${{ inputs.env }}.backend.config
+      - name: Retry Terraform Init
+        working-directory: infrastructure/deployment/${{ inputs.provider }}
+        run: |
+          for i in {1..10}; do
+            terraform init -backend-config=backend/${{ inputs.env }}.tf && break
+            echo "Retrying in 15s..."
+            sleep 15
+          done
 
       - name: Terraform Format Check
         if: github.ref != 'refs/heads/main'

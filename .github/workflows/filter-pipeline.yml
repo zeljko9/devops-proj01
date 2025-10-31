@@ -1,4 +1,4 @@
-name: Terraform Filter
+name: Infrastructure Filter
 
 permissions:
   id-token: write
