@@ -53,6 +53,7 @@ jobs:
     name: Auto Terraform Deploy - ${{ matrix.env }} - ${{ matrix.provider }}
     uses: ./.github/workflows/exec-pipeline.yml
     strategy:
+      fail-fast: false
       matrix:
         include:
           - env: dv
