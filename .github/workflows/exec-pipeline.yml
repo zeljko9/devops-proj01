@@ -122,13 +122,16 @@ jobs:
         working-directory: infrastructure/deployment/${{ inputs.provider }}
         run: terraform apply tfplan
 
-      - name: Export Ansible inventory
+      - name: Get Ansible inventory
+        id: inventory_info
         if: inputs.provider == 'services'
         working-directory: ansible
-        run: terraform output -raw ansible_inventory > inventory/${{ inputs.env }}.ini
+        run: |
+          ini=$(terraform output -raw ansible_inventory)
+          echo "entry=$ini" >> $GITHUB_OUTPUT
 
       - name: Generate known_hosts entry
-        id: known_hosts
+        id: ssh_info
         working-directory: infrastructure/deployment/${{ inputs.provider }}
         run: |
           ip=$(terraform output -raw public_ip_address)
@@ -148,7 +151,8 @@ jobs:
         uses: dawidd6/action-ansible-playbook@v5
         with:
           playbook: ansible/playbooks/deploy.yml
-          inventory-file: ansible/inventory/${{ inputs.env }}.ini
+          inventory: |
+            ${{ steps.inventory_info.outputs.entry }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           known_hosts: |
             ${{ steps.ssh_info.outputs.entry }}
