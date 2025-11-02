@@ -1,5 +1,5 @@
-output "public_ip_addresse" {
-  value = module.vm_service.public_ip_addresses
+output "public_ip_address" {
+  value = module.vm_service.public_ip_address
 }
 
 output "ansible_inventory" {
