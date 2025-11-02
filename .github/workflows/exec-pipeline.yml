@@ -125,7 +125,7 @@ jobs:
       - name: Export Ansible inventory
         if: inputs.provider == 'services'
         working-directory: infrastructure/deployment/${{ inputs.provider }}
-        run: terraform output -raw ansible_inventory > ../../ansible/inventory/${{ inputs.env }}.ini
+        run: terraform output -raw ansible_inventory > ansible/inventory/${{ inputs.env }}.ini
 
       - name: Remove IP to Azure Storage Firewall
         if: always()
@@ -139,8 +139,8 @@ jobs:
         if: inputs.provider == 'services'
         uses: dawidd6/action-ansible-playbook@v2
         with:
-          playbook: ./ansible/playbooks/deploy.yml
-          inventory: ./ansible/inventory/${{ inputs.env }}.ini
+          playbook: ansible/playbooks/deploy.yml
+          inventory: ansible/inventory/${{ inputs.env }}.ini
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           options: |
             -e "env_name=${{ inputs.env }}"
