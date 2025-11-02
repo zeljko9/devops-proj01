@@ -46,9 +46,8 @@ jobs:
              [[ "$MODIFIED_FILES" == *"infrastructure/modules/"* ]] || \
              [[ "$MODIFIED_FILES" == *"infrastructure/deployment/${{ inputs.provider }}/varvalues/${{ inputs.env }}.tfvars"* ]] || \
              [[ "$MODIFIED_FILES" == *"infrastructure/deployment/${{ inputs.provider }}/" ]]; then
-            echo "run=true" >> $GITHUB_OUTPUT
           else
-            echo "run=false" >> $GITHUB_OUTPUT
+            exit 1
           fi
 
       - name: Setup Terraform

@@ -1,0 +1,80 @@
+name: Infrastructure Filter
+
+permissions:
+  id-token: write
+  contents: read
+
+on:
+  workflow_dispatch:
+    inputs:
+      env:
+        description: "Choose env"
+        required: true
+        default: "dv"
+        type: choice
+        options:
+          - dv
+          - pr
+      provider:
+        description: "Choose praovider"
+        required: true
+        default: "services"
+        type: choice
+        options:
+          - common_infrastructure
+          - services
+jobs:
+  terraform-destroy:
+    name: Terraform Destroy - ${{ inputs.env }} - ${{ inputs.provider }}
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.env }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.13.4
+
+      - name: Azure Login via OIDC
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      
+      - name: Get Public IP
+        id: ip
+        run: echo "ip=$(curl -s https://api.ipify.org)" >> $GITHUB_OUTPUT
+
+      
+      - name: Add IP to Azure Storage Firewall
+        run: |
+          az storage account network-rule add \
+            --resource-group devops-1-${{ inputs.env }}-euw-proj01-00 \
+            --account-name 000devops${{ inputs.env }}euwproj01stg \
+            --ip-address ${{ steps.ip.outputs.ip }}
+
+      - name: Retry Terraform Init
+        working-directory: infrastructure/deployment/${{ inputs.provider }}
+        run: |
+          for i in {1..10}; do
+            terraform init -backend-config=backend/${{ inputs.env }}.backend.config && break
+            echo "Retrying in 15s..."
+            sleep 15
+          done
+
+      - name: Terraform Destroy
+        working-directory: infrastructure/deployment/${{ inputs.provider }}
+        run: terraform destroy -var-file=varvalues/${{ inputs.env }}.tfvars --auto-approve
+
+
+      - name: Remove IP to Azure Storage Firewall
+        if: always()
+        run: |
+          az storage account network-rule remove \
+            --resource-group devops-1-${{ inputs.env }}-euw-proj01-00 \
+            --account-name 000devops${{ inputs.env }}euwproj01stg \
+            --ip-address ${{ steps.ip.outputs.ip }}
