@@ -152,12 +152,12 @@ jobs:
 
       - name: Test SSH connection
         run: |
-          cat <<EOF > key.pem
-          ${{ secrets.SSH_PRIVATE_KEY }}
-          EOF
-          cat key.pem
+          printf '%s\n' "${{ secrets.SSH_PRIVATE_KEY }}" > key.pem
           chmod 600 key.pem
+          head -n 2 key.pem
+          tail -n 2 key.pem
           ssh -o StrictHostKeyChecking=no -i key.pem devops@172.201.44.252 "echo connected"
+
 
 
       - name: Setup Ansible
