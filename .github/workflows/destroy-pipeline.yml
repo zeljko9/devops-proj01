@@ -1,4 +1,4 @@
-name: Infrastructure Filter
+name: Infrastructure Destroy
 
 permissions:
   id-token: write
