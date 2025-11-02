@@ -154,8 +154,8 @@ jobs:
         with:
           playbook: ansible/playbooks/deploy.yml
           inventory: |
-            ${{ inputs.env }}-vm ansible_host=${{ steps.ip_info.outputs.ip }} ansible_user=devops ansible_port=22
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+            ${{ inputs.env }}-vm ansible_host=${{ steps.ip_info.outputs.ip }} ansible_user=devops ansible_port=22 ansible_ssh_private_key_file=.ansible_key
+          key: ${{ secrets.ANSIBLE_PRIVATE_KEY }}
           options: |
             -e "env_name=${{ inputs.env }}"
             --ssh-common-args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
