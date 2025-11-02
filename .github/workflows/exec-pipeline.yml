@@ -158,7 +158,7 @@ jobs:
           playbook: ansible/playbooks/deploy.yml
           inventory: |
             ${{ steps.inventory_info.outputs.entry }}
-          key: ${{ vars.SSH_PRIVATE_KEY }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           known_hosts: |
             ${{ steps.ssh_info.outputs.entry }}
           options: |
