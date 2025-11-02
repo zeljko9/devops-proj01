@@ -148,15 +148,6 @@ jobs:
             --resource-group devops-1-${{ inputs.env }}-euw-proj01-00 \
             --account-name 000devops${{ inputs.env }}euwproj01stg \
             --ip-address ${{ steps.ip.outputs.ip }}
-      
-
-      - name: Test SSH connection
-        run: |
-          printf '%s\n' "${{ secrets.SSH_PRIVATE_KEY }}" > key.pem
-          chmod 600 key.pem
-          head -n 2 key.pem
-          tail -n 2 key.pem
-          ssh -o StrictHostKeyChecking=no -i key.pem devops@172.201.44.252 "echo connected"
 
 
 
@@ -167,7 +158,7 @@ jobs:
           playbook: ansible/playbooks/deploy.yml
           inventory: |
             ${{ steps.inventory_info.outputs.entry }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          key: ${{ vars.SSH_PRIVATE_KEY }}
           known_hosts: |
             ${{ steps.ssh_info.outputs.entry }}
           options: |
