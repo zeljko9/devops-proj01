@@ -1,14 +1,3 @@
-- name: Add remote host to known_hosts
-  hosts: localhost
-  gather_facts: false
-  vars:
-    host_ip: "{{ lookup('pipe', 'curl -s ifconfig.me') }}"
-  tasks:
-    - name: Add host key for {{ host_ip }}
-      ansible.builtin.known_hosts:
-        name: "{{ host_ip }}"
-        key: "{{ lookup('pipe', 'ssh-keyscan -H ' + host_ip) }}"
-
 - name: Deploy Keycloak, Postgres, Nginx, OAuth2 Proxy
   hosts: all
   become: true

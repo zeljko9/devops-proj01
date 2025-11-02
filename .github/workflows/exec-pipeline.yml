@@ -127,9 +127,13 @@ jobs:
         working-directory: ansible
         run: terraform output -raw ansible_inventory > inventory/${{ inputs.env }}.ini
 
-      - name: Print ansible inventory
-        working-directory: ansible
-        run: tree .. && cat inventory/${{ inputs.env }}.ini
+      - name: Generate known_hosts entry
+        id: known_hosts
+        working-directory: infrastructure/deployment/${{ inputs.provider }}
+        run: |
+          ip=$(terraform output -raw public_ip_address)
+          echo "entry=$(ssh-keyscan -H $ip 2>/dev/null)" >> $GITHUB_OUTPUT
+
 
       - name: Remove IP to Azure Storage Firewall
         if: always()
@@ -146,5 +150,7 @@ jobs:
           playbook: ansible/playbooks/deploy.yml
           inventory: ansible/inventory/${{ inputs.env }}.ini
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          known_hosts: |
+            ${{ steps.ssh_info.outputs.entry }}
           options: |
             -e "env_name=${{ inputs.env }}"

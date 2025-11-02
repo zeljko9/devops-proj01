@@ -9,6 +9,6 @@ output "vm_name" {
   value       = module.virtual_machine.name
 }
 
-output "public_ip_addresses" {
+output "public_ip_address" {
   value = module.vm_public_ip[0].ip_addresses
 }
