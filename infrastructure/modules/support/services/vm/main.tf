@@ -30,7 +30,7 @@ module "virtual_machine" {
 
     admin_ssh_key = [{
       username   = var.settings.vm.admin_username
-      public_key = file("~/.ssh/devops_vm.pub")
+      public_key = file("${path.module}/devops_vm.pub")
     }]
 
   custom_data = base64encode(file("${path.module}/cloud-init.yaml")) }
