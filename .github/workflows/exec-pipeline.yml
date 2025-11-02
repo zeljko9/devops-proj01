@@ -148,7 +148,7 @@ jobs:
         uses: dawidd6/action-ansible-playbook@v2
         with:
           playbook: ansible/playbooks/deploy.yml
-          inventory: ansible/inventory/${{ inputs.env }}.ini
+          inventory-file: ansible/inventory/${{ inputs.env }}.ini
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           known_hosts: |
             ${{ steps.ssh_info.outputs.entry }}
