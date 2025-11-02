@@ -158,3 +158,4 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           options: |
             -e "env_name=${{ inputs.env }}"
+            --ssh-common-args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
