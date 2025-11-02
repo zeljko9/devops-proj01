@@ -125,7 +125,7 @@ jobs:
       - name: Get Ansible inventory
         id: inventory_info
         if: inputs.provider == 'services'
-        working-directory: ansible
+        working-directory: infrastructure/deployment/${{ inputs.provider }}
         run: |
           ini=$(terraform output -raw ansible_inventory)
           echo "entry=$ini" >> $GITHUB_OUTPUT
