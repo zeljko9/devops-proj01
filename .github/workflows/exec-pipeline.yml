@@ -134,6 +134,7 @@ jobs:
 
       - name: Generate known_hosts entry
         id: ssh_info
+        if: inputs.provider == 'services'
         working-directory: infrastructure/deployment/${{ inputs.provider }}
         run: |
           ip=$(terraform output -raw public_ip_address)
