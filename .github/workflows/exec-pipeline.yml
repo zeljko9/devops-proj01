@@ -152,7 +152,7 @@ jobs:
 
       - name: Test SSH connection
         run: |
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > key.pem
+          printf "%s\n" "${{ secrets.SSH_PRIVATE_KEY }}" > key.pem
           cat key.pem
           chmod 600 key.pem
           ssh -o StrictHostKeyChecking=no -i key.pem devops@172.201.44.252 "echo connected"
