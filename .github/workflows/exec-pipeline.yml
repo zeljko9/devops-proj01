@@ -148,6 +148,14 @@ jobs:
             --resource-group devops-1-${{ inputs.env }}-euw-proj01-00 \
             --account-name 000devops${{ inputs.env }}euwproj01stg \
             --ip-address ${{ steps.ip.outputs.ip }}
+      
+
+      - name: Test SSH connection
+        run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > key.pem
+          cat key.pem
+          chmod 600 key.pem
+          ssh -o StrictHostKeyChecking=no -i key.pem devops@172.201.44.252 "echo connected"
 
       - name: Setup Ansible
         if: inputs.provider == 'services'
