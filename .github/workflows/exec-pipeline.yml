@@ -121,15 +121,12 @@ jobs:
         working-directory: infrastructure/deployment/${{ inputs.provider }}
         run: terraform apply tfplan
 
-      - name: Get Ansible inventory
-        id: inventory_info
+      - name: Get VM IP
+        id: ip_info
         if: inputs.provider == 'services'
         working-directory: infrastructure/deployment/${{ inputs.provider }}
         run: |
-          ini=$(terraform output -raw ansible_inventory)
-          echo "entry<<EOF" >> $GITHUB_OUTPUT
-          echo "$ini" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          echo "ip=$(terraform output -raw public_ip_address)" >> $GITHUB_OUTPUT
 
 
       - name: Generate known_hosts entry
@@ -157,9 +154,7 @@ jobs:
         with:
           playbook: ansible/playbooks/deploy.yml
           inventory: |
-            ${{ steps.inventory_info.outputs.entry }}
+            ${{ inputs.env }}-vm ansible_host=${{ steps.ip_info.outputs.ip }} ansible_user=devops ansible_port=22
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          known_hosts: |
-            ${{ steps.ssh_info.outputs.entry }}
           options: |
             -e "env_name=${{ inputs.env }}"

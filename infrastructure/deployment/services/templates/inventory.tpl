@@ -1,2 +1,1 @@
-[${env_name}]
 ${env_name}-vm ansible_host=${ip} ansible_user=devops ansible_port=22
