@@ -129,7 +129,7 @@ jobs:
 
       - name: Print ansible inventory
         working-directory: ansible
-        run: cat inventory/${{ inputs.env }}.ini
+        run: tree .. && cat inventory/${{ inputs.env }}.ini
 
       - name: Remove IP to Azure Storage Firewall
         if: always()
