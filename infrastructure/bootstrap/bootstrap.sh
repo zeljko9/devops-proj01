@@ -53,7 +53,7 @@ NONPROD_SP_ID=$(az ad sp create --id $NONPROD_APP_ID --query objectId -o tsv)
 az ad app federated-credential create --id $NONPROD_APP_ID --parameters '{
   "name": "github-federation",
   "issuer": "https://token.actions.githubusercontent.com",
-  "subject": "repo:<your-org>/<your-repo>:ref:refs/heads/main",
+  "subject": "repo:zeljko9/devops-proj01:ref:refs/heads/main",
   "audiences": ["api://AzureADTokenExchange"]
 }'
 
@@ -64,7 +64,7 @@ PROD_SP_ID=$(az ad sp create --id $PROD_APP_ID --query objectId -o tsv)
 az ad app federated-credential create --id $PROD_APP_ID --parameters '{
   "name": "github-federation",
   "issuer": "https://token.actions.githubusercontent.com",
-  "subject": "repo:<your-org>/<your-repo>:ref:refs/heads/main",
+  "subject": "repo:zeljko9/devops-proj01:ref:refs/heads/main",
   "audiences": ["api://AzureADTokenExchange"]
 }'
 

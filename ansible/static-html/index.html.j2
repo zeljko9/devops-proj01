@@ -54,22 +54,18 @@
   </div>
 
   <script>
-    // Kreiraj Keycloak instancu
     const keycloak = new Keycloak({
-      url: '/keycloak',          // proxirano kroz nginx
+      url: '/keycloak',          
       realm: 'master',
       clientId: 'nginx-client'
     });
 
-    // Inicijalizacija Keycloak-a
     keycloak.init({ onLoad: 'login-required' })
       .then(authenticated => {
         if (authenticated) {
-          // Prikazi sadržaj ako je korisnik ulogovan
           document.getElementById('content').style.display = 'block';
           document.getElementById('username').textContent = keycloak.tokenParsed.preferred_username;
         } else {
-          // Ako nije ulogovan, pokreni login
           keycloak.login();
         }
       })
@@ -78,7 +74,6 @@
         document.body.innerHTML = "<h2 style='color:red;'>Failed to connect to Keycloak.</h2>";
       });
 
-    // Logout funkcija
     function logout() {
       keycloak.logout({ redirectUri: window.location.origin });
     }
