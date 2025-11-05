@@ -19,7 +19,7 @@ Access to the static page is controlled via Keycloak authentication.
   - `varvalues/` → environment-specific variables
   - `backend/` → remote state configuration
 - **Bootstrap Script**:
-  - Creates App Registrations, federated identities, SSH keys, GitHub secrets.
+  - Creates App Registrations, federated identities, SSH key, GitHub secrets.
 - **VM Specs**:
   - Size: `Standard_B1ms` (supports workload for Keycloak + Postgres + Nginx)
   - OS: Ubuntu 20.04 LTS (native Docker support, apt ecosystem)
@@ -32,7 +32,7 @@ Access to the static page is controlled via Keycloak authentication.
 
 ## 4. Configuration (Ansible)
 Playbook: `deploy.yml`
-- Copy `index.html.j2` template
+- Copy `index.html.j2`
 - Configure Nginx:
   - `/` → static page
   - `/keycloak` → reverse proxy to Keycloak
@@ -50,7 +50,7 @@ Playbook: `deploy.yml`
 ### Pipelines:
 - **Filter Pipeline** (`filter-pipeline.yml`):
   - Trigger: PR to `main`, push to `main`, manual
-  - Uses matrix to detect changes and call Exec pipeline
+  - Uses matrix to detect changes and call exec pipeline
 - **Exec Pipeline** (`exec-pipeline.yml`):
   - Steps:
     1. Check if pipeline should run (git diff)
@@ -75,6 +75,10 @@ Playbook: `deploy.yml`
 - Monitoring (Prometheus/Grafana)
 - Auto scale-out & scale up
 - Disaster Recovery
+- Use PaaS for Postgres
+- Use app services/container services for keycloak/nginx
+- Put APIM/Front Door in front of Nginx app
+- Use Entra ID auth instead of keycloak
 
 ## 8. My desired Architecture
 ![Desired Architecture](DesiredArchitectureProj01.png)
@@ -105,3 +109,21 @@ AKS Cons: Complex setup, higher cost, cluster management overhead.
 - GitHub Actions can automate:
   - docker build + docker push
   - az containerapp update --image <tag>
+
+
+## Honest conclusion
+This project was a lot of fun, and I’m definitely going to keep working on it. You can follow my progress—it’ll stay open source.
+The biggest challenge? Time, for sure. Two weeks would’ve been perfect, but with 11 projects at work, family stuff, and just buying an apartment and moving in… yeah, worst timing ever for a new project.
+On top of that, this was my first time using GitHub (I’m usually on GitLab, Azure DevOps, and Jenkins—Jenkins is my champ).
+
+Things I didn’t have time to debug:
+- Ansible couldn’t connect to the VM via SSH using dawidd6/action-ansible-playbook@v5—works fine locally though (on github issues within remote repo, other people has simillar issue)
+- Terraform structure might be a bit overkill for this project, same for the workflows
+- Locally, index.html throws an error when running:
+ const keycloak = new Keycloak({
+      url: '/keycloak',          
+      realm: 'master',
+      clientId: 'nginx-client'
+    });
+- AMA logging for VM has some issues with tf deploying
+- I normaly don't push things straightly to the main branch, but this is the test case, forgive me :)
