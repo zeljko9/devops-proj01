@@ -134,8 +134,7 @@ The biggest challenge? Time, for sure. Two weeks would’ve been perfect, but wi
 On top of that, this was my first time using GitHub (I’m usually on GitLab, Azure DevOps, and Jenkins—Jenkins is my champ).
 
 Things I didn’t have time to debug:
-- Ansible couldn’t connect to the VM via SSH using dawidd6/action-ansible-playbook@v5—works fine locally though (on github issues within remote repo, other people has simillar issue)
-- Terraform structure might be a bit overkill for this project, same for the workflows
+- Ansible couldn’t connect to the VM via SSH using dawidd6/action-ansible-playbook@v5 — ssh/ansible script is working fine locally though (on github issues within remote repo, other people has simillar issue)
 - Locally, index.html throws an error when running:
  const keycloak = new Keycloak({
       url: '/keycloak',          
@@ -143,4 +142,4 @@ Things I didn’t have time to debug:
       clientId: 'nginx-client'
     });
 - AMA logging for VM has some issues with tf deploying
-- I normaly don't push things straightly to the main branch, but this is the test case, forgive me :)
+- I normaly don't push things straightly to the main branch, but this is the test case
