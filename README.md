@@ -77,10 +77,10 @@ Playbook: `deploy.yml`
 - Disaster Recovery
 - Use PaaS for Postgres
 - Use app services/container services for keycloak/nginx
-- Put APIM/Front Door in front of Nginx app
+- Put Front Door in front of Nginx app
 - Use Entra ID auth instead of keycloak
 
-## 8. My desired Architecture
+## 8. My desired Architecture (not perfect, but smth I'd like to work on)
 ![Desired Architecture](DesiredArchitectureProj01.png)
 
 For three containers (Keycloak, Postgres, Nginx), a full VM is often overkill, and AKS (Azure Kubernetes Service) is even more so because:
@@ -104,16 +104,33 @@ AKS Cons: Complex setup, higher cost, cluster management overhead.
   - Start small and scale to thousands if needed
   - No redesign required when your app grows
 
+### Front door
+- Front Door acts as a global entry point, allowing backend (NGINX) to remain in a private VNET without a public IP, connected securely via Private Link
+- Users connect to the nearest Microsoft edge location, reducing latency and improving response times
+- Built-in WAF and DDoS Protection
+- SSL Termination and Custom Domains
+- Automatically routes traffic to healthy backends, ensuring resilience and uptime
+
+### PaaS Postgres
+- Microsoft handles patching, backups, high availability, and scaling—no manual maintenance required
+- Supports Private Endpoints, encryption at rest and in transit, and compliance with enterprise standards
+- Automated Backups and Restore
+
 ### Deployment Flow
 - Build Docker images → Push to ACR → Update Container App revision
 - GitHub Actions can automate:
   - docker build + docker push
   - az containerapp update --image <tag>
 
+### Possible perfect improvements for this approach
+1. Identity -> Entra ID (old AAD - not sure why Azure did it) Keycloak
+2. Reverse Proxy / Routing -> Front Door + App Gateway instead of NGINX
+3. Static Content -> Azure Storage + CDN
+
 
 ## Honest conclusion
 This project was a lot of fun, and I’m definitely going to keep working on it. You can follow my progress—it’ll stay open source.
-The biggest challenge? Time, for sure. Two weeks would’ve been perfect, but with 11 projects at work, family stuff, and just buying an apartment and moving in… yeah, worst timing ever for a new project.
+The biggest challenge? Time, for sure. Two weeks would’ve been perfect, but with 11 projects at work, family stuff, and just moving in into new home… yeah, worst timing ever for a new project.
 On top of that, this was my first time using GitHub (I’m usually on GitLab, Azure DevOps, and Jenkins—Jenkins is my champ).
 
 Things I didn’t have time to debug:
